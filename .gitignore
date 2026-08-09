@@ -1,0 +1,23 @@
+# Environment & Secrets 
+.env
+*.env
+!.env.example
+
+# Virtual Environments & Caches 
+.venv/
+venv/
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# Runtime Logs
+logs/
+*.log
+
+# Code Editor Directories
+.vscode/
+.idea/
+
+# OS Generated Files
+.DS_Store
+Thumbs.db

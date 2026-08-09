@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "tv-series-bot"
+version = "1.0.0"
+description = "OTT-Style Telegram TV Series Bot"
+requires-python = ">=3.12"
+readme = "README.md"
+dependencies = [
+    "aiogram==3.15.0",
+    "aiohttp<3.11,>=3.9.0",
+    "sqlalchemy[asyncio]==2.0.36",
+    "asyncpg==0.30.0",
+    "alembic==1.14.0",
+    "redis==5.2.0",
+    "pydantic-settings==2.6.1",
+    "structlog==24.4.0",
+]
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
