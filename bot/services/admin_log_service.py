@@ -60,13 +60,22 @@ class AdminLogService:
         series_title: str,
         season_num: int,
         episode_num: int,
+        start_ep: int | None,
+        end_ep: int | None,
         quality: str,
         language: str,
         formatted_size: str,
         episode_id: int,
     ) -> None:
         from bot.utils.text_formatters import clean_language_display
-        ep_label = "Complete" if episode_num == 0 else str(episode_num)
+        
+        if start_ep is not None and end_ep is not None and start_ep != end_ep:
+            ep_label = f"{start_ep}-{end_ep}"
+        elif episode_num == 0:
+            ep_label = "Complete"
+        else:
+            ep_label = str(episode_num)
+            
         text = (
             f"🍿 <b>New Content Indexed</b>\n"
             f"━━━━━━━━━━━━━━━━━━━\n"

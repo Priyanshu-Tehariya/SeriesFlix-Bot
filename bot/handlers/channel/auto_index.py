@@ -107,6 +107,8 @@ async def _process_batch(bot: Bot) -> None:
                     series_title=parsed.series_name or "Unknown",
                     season_num=parsed.season or 0,
                     episode_num=parsed.episode or 0,
+                    start_ep=parsed.start_ep,
+                    end_ep=parsed.end_ep,
                     quality=parsed.quality or "Unknown",
                     language=parsed.language_display or "Unknown",
                     formatted_size=format_file_size(item["file_size"]),
