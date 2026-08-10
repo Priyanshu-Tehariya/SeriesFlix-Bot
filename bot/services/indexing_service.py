@@ -109,8 +109,8 @@ class IndexingService:
         episodes_created = False
         first_episode_id = None
         
-        start = parsed.start_ep if parsed.start_ep is not None else (parsed.episode if parsed.episode is not None else 0)
-        end = parsed.end_ep if parsed.end_ep is not None else start
+        start = parsed.start_ep or parsed.episode or 0
+        end = parsed.end_ep or parsed.episode or start
 
         for ep_num in range(start, end + 1):
             if is_batch:

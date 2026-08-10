@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 # ---------------------------------------------------------------------------
 
 # 1. Batch SxxExx-Exx -> "Money Heist S01 Part-01 E01-E06" or "S01E01-E06"
-RE_BATCH_SXXEXX = re.compile(r"[Ss](\d{1,2})[\s._-]?(?:(?:Part|Pt\.?|Vol\.?)[\s._-]?\d{1,2}[\s._-]?)?[Ee](\d{1,3})[\s._]*(?:-|to|~)[\s._]*(?:[Ee]?)(\d{1,3})", re.IGNORECASE)
+RE_BATCH_SXXEXX = re.compile(r"[Ss](\d{1,2})[\s._-]?(?:(?:Part|Pt\.?|Vol\.?)[\s._-]?\d{1,2}[\s._-]?)?[Ee](\d{1,3})[\s._]*(?:-|–|—|to|~)[\s._]*(?:[Ee]?)(\d{1,3})", re.IGNORECASE)
 
 # 2. Standard SxxExx -> "Breaking.Bad.S01E05..."
 RE_STANDARD_SXXEXX = re.compile(r"[Ss](\d{1,2})[\s._-]?[Ee](\d{1,3})")
