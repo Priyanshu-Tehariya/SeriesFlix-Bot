@@ -63,15 +63,6 @@ class IndexingService:
             )
             return False, None
             
-        if parsed.episode == 0 or parsed.start_ep == 0:
-            logger.warning(
-                "indexing_rejected_zero_episode",
-                filename=filename,
-                episode=parsed.episode,
-                start_ep=parsed.start_ep,
-            )
-            return False, None
-
         # Determine if this is a batch file
         is_batch = (parsed.start_ep is not None and parsed.end_ep is not None and parsed.start_ep != parsed.end_ep)
         
@@ -155,7 +146,7 @@ class IndexingService:
             filename=filename,
             series=series.title,
             season=parsed.season,
-            episode=start,
+            episode=ep_num,
             quality=quality_enum.value,
             created=episodes_created,
             is_batch=is_batch,
