@@ -25,6 +25,8 @@ async def reindex_channel(start_id: int, max_id: int, delay: float = 1.0):
     
     success_count = 0
     skip_count = 0
+    total_processed = 0
+    total_to_process = max_id - start_id + 1
     
     logger.info(f"Starting re-indexing from message ID {start_id} to {max_id}")
     
@@ -32,19 +34,24 @@ async def reindex_channel(start_id: int, max_id: int, delay: float = 1.0):
         indexing_service = IndexingService(session, cache)
         
         for msg_id in range(start_id, max_id + 1):
+            total_processed += 1
+            if total_processed % 25 == 0:
+                logger.info(f"Progress: {total_processed}/{total_to_process} messages scanned...")
+                
             try:
                 # Forward the message to the log channel (acting as a temporary dump)
                 forwarded_msg = await bot.forward_message(
                     chat_id=settings.LOG_CHANNEL_ID,
                     from_chat_id=settings.INDEX_CHANNEL_ID,
-                    message_id=msg_id
+                    message_id=msg_id,
+                    disable_notification=True
                 )
                 
                 # Extract file details
                 file = forwarded_msg.document or forwarded_msg.video
                 
                 if not file:
-                    logger.debug(f"Message {msg_id} contains no document/video.")
+                    logger.debug(f"Message {msg_id} contains no document/video or could not be extracted.")
                     skip_count += 1
                 else:
                     raw_filename = (
@@ -69,7 +76,7 @@ async def reindex_channel(start_id: int, max_id: int, delay: float = 1.0):
                             logger.info(f"Successfully indexed msg {msg_id}: {raw_filename}")
                             success_count += 1
                         else:
-                            logger.info(f"Skipped/Duplicate msg {msg_id}: {raw_filename}")
+                            logger.debug(f"Skipped/Duplicate msg {msg_id}: {raw_filename}")
                             skip_count += 1
                     else:
                         skip_count += 1
@@ -81,18 +88,17 @@ async def reindex_channel(start_id: int, max_id: int, delay: float = 1.0):
                 )
                 
             except TelegramBadRequest as e:
-                # E.g. "message to forward not found" (deleted message)
-                if "message to forward not found" in str(e).lower() or "message not found" in str(e).lower():
-                    logger.debug(f"Message {msg_id} not found (deleted/skipped).")
-                else:
-                    logger.warning(f"Failed to forward message {msg_id}: {e}")
+                # E.g. "message to forward not found" (deleted message) or "message can't be forwarded"
+                logger.debug(f"Message {msg_id} failed/skipped: {e}")
                 skip_count += 1
+                continue
             except TelegramForbiddenError as e:
-                logger.error(f"Bot lacks permissions to forward from index channel or post to log channel: {e}")
+                logger.error(f"Bot lacks permissions to copy from index channel or post to log channel: {e}")
                 break
             except Exception as e:
                 logger.error(f"Unexpected error processing message {msg_id}: {e}")
                 skip_count += 1
+                continue
             
             # Rate limiting delay
             await asyncio.sleep(delay)
