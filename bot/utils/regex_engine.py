@@ -7,7 +7,10 @@ from dataclasses import dataclass, field
 # Pattern Library (compiled once at import time)
 # ---------------------------------------------------------------------------
 
-# 1. Standard SxxExx -> "Breaking.Bad.S01E05..."
+# 1. Batch SxxExx-Exx -> "Money Heist S01 Part-01 E01-E06" or "S01E01-E06"
+RE_BATCH_SXXEXX = re.compile(r"[Ss](\d{1,2})[\s._-]?(?:(?:Part|Pt\.?|Vol\.?)[\s._-]?\d{1,2}[\s._-]?)?[Ee](\d{1,3})[\s._]*(?:-|to|~)[\s._]*(?:[Ee]?)(\d{1,3})", re.IGNORECASE)
+
+# 2. Standard SxxExx -> "Breaking.Bad.S01E05..."
 RE_STANDARD_SXXEXX = re.compile(r"[Ss](\d{1,2})[\s._-]?[Ee](\d{1,3})")
 
 # 2. Numeric NxN -> "The.Boys.1x05..."
@@ -51,6 +54,8 @@ class ParsedFilename:
     series_name: str | None = None
     season: int | None = None
     episode: int | None = None          # 0 == complete-season record
+    start_ep: int | None = None
+    end_ep: int | None = None
     is_complete_season: bool = False
     quality: str = "Unknown"
     languages: list[str] = field(default_factory=list)
@@ -69,14 +74,23 @@ class FilenameParser:
         result = ParsedFilename(raw=cleaned)
         match_pos = len(cleaned)
 
-        if m := RE_STANDARD_SXXEXX.search(cleaned):
+        if m := RE_BATCH_SXXEXX.search(cleaned):
+            result.season = int(m.group(1))
+            result.start_ep = int(m.group(2))
+            result.end_ep = int(m.group(3))
+            result.episode = result.start_ep
+            match_pos = m.start()
+        elif m := RE_STANDARD_SXXEXX.search(cleaned):
             result.season, result.episode = int(m.group(1)), int(m.group(2))
+            result.start_ep = result.end_ep = result.episode
             match_pos = m.start()
         elif m := RE_NUMERIC_X.search(cleaned):
             result.season, result.episode = int(m.group(1)), int(m.group(2))
+            result.start_ep = result.end_ep = result.episode
             match_pos = m.start()
         elif m := RE_VERBOSE.search(cleaned):
             result.season, result.episode = int(m.group(1)), int(m.group(2))
+            result.start_ep = result.end_ep = result.episode
             match_pos = m.start()
         elif m := RE_SEASON_ONLY.search(cleaned):
             result.season = int(m.group(1))

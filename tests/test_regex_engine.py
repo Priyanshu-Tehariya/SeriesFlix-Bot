@@ -64,6 +64,43 @@ class TestArchitectureSampleTable:
         assert r.languages == ["Hindi"]
 
 
+class TestMultiPartBatch:
+    """Ensure multi-part batch files parse correctly into episode ranges."""
+
+    def test_batch_part_01(self):
+        r = parse("Money Heist S01 Part-01 E01-E06 720p.mkv")
+        assert r.series_name == "Money Heist"
+        assert r.season == 1
+        assert r.start_ep == 1
+        assert r.end_ep == 6
+        assert r.quality == "720p"
+
+    def test_batch_part_02(self):
+        r = parse("Money Heist S01 Part-02 E07-E13 720p.mkv")
+        assert r.series_name == "Money Heist"
+        assert r.season == 1
+        assert r.start_ep == 7
+        assert r.end_ep == 13
+        assert r.quality == "720p"
+
+    def test_batch_no_part(self):
+        r = parse("Money Heist S01 E01-E06 720p.mkv")
+        assert r.series_name == "Money Heist"
+        assert r.season == 1
+        assert r.start_ep == 1
+        assert r.end_ep == 6
+        assert r.quality == "720p"
+
+    def test_single_episode_fallback(self):
+        r = parse("Money Heist S01E05 720p.mkv")
+        assert r.series_name == "Money Heist"
+        assert r.season == 1
+        assert r.start_ep == 5
+        assert r.end_ep == 5
+        assert r.episode == 5
+        assert r.quality == "720p"
+
+
 # ---------------------------------------------------------------------------
 # Edge cases & additional coverage
 # ---------------------------------------------------------------------------
