@@ -3,7 +3,7 @@ from __future__ import annotations
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from bot.keyboards.callback_factories import EpisodeCB, NavCB, QualityCB, SeasonCB, BatchDownloadCB
+from bot.keyboards.callback_factories import EpisodeCB, NavCB, QualityCB, SeasonCB, BatchDownloadCB, CombinedDownloadCB
 
 
 def build_season_kb(
@@ -81,8 +81,8 @@ def build_episode_kb(
     combined_ep = next((ep for ep in episodes if ep["episode_number"] == 0), None)
     if combined_ep:
         builder.button(
-            text="📦 Complete Season (Combined File)",
-            callback_data=EpisodeCB(season_id=season_id, episode_id=combined_ep["id"]),
+            text="📦 Complete Season (Combined / Part File)",
+            callback_data=CombinedDownloadCB(season_id=season_id, quality=quality),
         )
         
     # 2. Batch Download Button

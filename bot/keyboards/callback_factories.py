@@ -25,6 +25,12 @@ class BatchDownloadCB(CallbackData, prefix="batch"):
     quality: str
 
 
+class CombinedDownloadCB(CallbackData, prefix="cmb_dl"):
+    """Quality page -> download all combined/part files (episode=0)."""
+    season_id: int
+    quality: str
+
+
 class NavCB(CallbackData, prefix="nav"):
     """Back-navigation / close actions shared across all steps."""
     action: str    # "to_seasons" | "to_qualities" | "close"

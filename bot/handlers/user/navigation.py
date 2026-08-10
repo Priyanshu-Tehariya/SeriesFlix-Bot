@@ -7,7 +7,7 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InputMediaPhoto, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.keyboards.callback_factories import EpisodeCB, NavCB, QualityCB, SeasonCB, BatchDownloadCB
+from bot.keyboards.callback_factories import EpisodeCB, NavCB, QualityCB, SeasonCB, BatchDownloadCB, CombinedDownloadCB
 from bot.keyboards.inline.navigation_kb import (
     build_episode_kb,
     build_quality_kb,
@@ -188,6 +188,76 @@ async def on_episode_selected(
         await callback.message.answer("Failed to deliver file. It might have been deleted from the index channel.")
 
     await nav.increment_download(ep["id"])
+
+
+# ---------------------------------------------------------------------------
+# CombinedDownloadCB: Deliver all combined/part files for a season
+# ---------------------------------------------------------------------------
+
+@router.callback_query(CombinedDownloadCB.filter())
+async def on_combined_download_selected(
+    callback: CallbackQuery,
+    callback_data: CombinedDownloadCB,
+    session: AsyncSession,
+) -> None:
+    await callback.answer("Preparing combined files…")
+    nav = _get_nav_svc(session)
+
+    episodes = await nav.get_episodes(callback_data.season_id, callback_data.quality)
+    if not episodes:
+        await callback.answer("No files available for this quality.", show_alert=True)
+        return
+
+    # Filter out individual episodes, keep only episode_number == 0
+    episodes = [ep for ep in episodes if ep["episode_number"] == 0]
+
+    # No need to sort by episode number since they are all 0, but they'll be sent in the order retrieved
+    # Usually ordered by ID implicitly in the DB if they have same number
+
+    if not episodes:
+        await callback.answer("No combined files available.", show_alert=True)
+        return
+
+    if callback.message is None or callback.from_user is None:
+        return
+
+    status_msg = await callback.message.answer(f"📦 Starting delivery of {len(episodes)} combined file(s)...")
+
+    import asyncio
+    import html
+    from bot.utils.text_formatters import clean_language_display
+
+    for ep_dict in episodes:
+        ep = await nav.get_episode_for_delivery(ep_dict["id"])
+        if not ep:
+            continue
+            
+        caption = build_episode_caption(ep, settings.AUTO_DELETE_SECONDS)
+        
+        try:
+            sent_msg = await callback.message.bot.send_document(
+                chat_id=callback.from_user.id,
+                document=ep["file_id"],
+                caption=caption,
+                parse_mode="HTML"
+            )
+            if settings.AUTO_DELETE_SECONDS > 0:
+                asyncio.create_task(
+                    schedule_auto_delete(
+                        callback.message.bot,
+                        callback.from_user.id,
+                        sent_msg.message_id,
+                        settings.AUTO_DELETE_SECONDS
+                    )
+                )
+            await nav.increment_download(ep["id"])
+        except Exception as e:
+            import structlog
+            structlog.get_logger(__name__).error("combined_delivery_failed", error=str(e), ep_id=ep["id"])
+            
+        await asyncio.sleep(0.5)
+        
+    await status_msg.delete()
 
 
 # ---------------------------------------------------------------------------
