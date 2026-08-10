@@ -47,45 +47,48 @@ async def reindex_channel(start_id: int, max_id: int, delay: float = 1.0):
                     disable_notification=True
                 )
                 
-                # Extract file details
-                file = forwarded_msg.document or forwarded_msg.video
-                
-                if not file:
-                    logger.debug(f"Message {msg_id} contains no document/video or could not be extracted.")
-                    skip_count += 1
-                else:
-                    raw_filename = (
-                        forwarded_msg.caption
-                        or (forwarded_msg.document.file_name if forwarded_msg.document else None)
-                        or (forwarded_msg.video.file_name if forwarded_msg.video else None)
-                        or "Unknown_File"
-                    ).strip()
+                try:
+                    # Extract media and filename
+                    media = forwarded_msg.document or forwarded_msg.video
                     
-                    file_id = file.file_id
-                    file_unique_id = file.file_unique_id
-                    file_size = file.file_size or 0
-                    
-                    if raw_filename != "Unknown_File":
-                        created, ep_id = await indexing_service.ingest(
-                            filename=raw_filename,
-                            file_id=file_id,
-                            file_unique_id=file_unique_id,
-                            file_size=file_size,
-                        )
-                        if created:
-                            logger.info(f"Successfully indexed msg {msg_id}: {raw_filename}")
-                            success_count += 1
-                        else:
-                            logger.debug(f"Skipped/Duplicate msg {msg_id}: {raw_filename}")
-                            skip_count += 1
-                    else:
+                    if not media:
+                        logger.debug(f"Message {msg_id} contains no document/video.")
                         skip_count += 1
-                
-                # Delete the temporarily forwarded message to clean up the log channel
-                await bot.delete_message(
-                    chat_id=settings.LOG_CHANNEL_ID,
-                    message_id=forwarded_msg.message_id
-                )
+                    else:
+                        raw_filename = (
+                            forwarded_msg.caption or getattr(media, 'file_name', None) or "Unknown_File"
+                        ).strip()
+                        
+                        file_id = media.file_id
+                        file_unique_id = media.file_unique_id
+                        file_size = media.file_size or 0
+                        
+                        if raw_filename != "Unknown_File":
+                            created, ep_id = await indexing_service.ingest(
+                                filename=raw_filename,
+                                file_id=file_id,
+                                file_unique_id=file_unique_id,
+                                file_size=file_size,
+                            )
+                            
+                            from bot.utils.regex_engine import FilenameParser
+                            parsed = FilenameParser.parse(raw_filename)
+                            ep_label = f"{parsed.start_ep}-{parsed.end_ep}" if (parsed.start_ep is not None and parsed.end_ep is not None and parsed.start_ep != parsed.end_ep) else str(parsed.episode or 0)
+                            
+                            if created:
+                                logger.info(f"Successfully indexed msg {msg_id} (S{parsed.season or 0} E{ep_label}): {raw_filename[:40]}...")
+                                success_count += 1
+                            else:
+                                logger.debug(f"Skipped/Duplicate msg {msg_id} (S{parsed.season or 0} E{ep_label}): {raw_filename[:40]}...")
+                                skip_count += 1
+                        else:
+                            skip_count += 1
+                finally:
+                    # Delete the temporarily forwarded message to clean up the log channel
+                    await bot.delete_message(
+                        chat_id=settings.LOG_CHANNEL_ID,
+                        message_id=forwarded_msg.message_id
+                    )
                 
             except TelegramBadRequest as e:
                 # E.g. "message to forward not found" (deleted message) or "message can't be forwarded"

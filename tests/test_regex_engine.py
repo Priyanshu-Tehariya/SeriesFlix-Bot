@@ -43,7 +43,9 @@ class TestArchitectureSampleTable:
         r = parse("Stranger.Things.S04.COMPLETE.2160p.NF.WEB-DL.x265-HDR.mkv")
         assert r.series_name == "Stranger Things"
         assert r.season == 4
-        assert r.episode == 0
+        assert r.episode == 1
+        assert r.start_ep == 1
+        assert r.end_ep == 10
         assert r.quality == "4K"
         assert r.languages == []
 
@@ -59,7 +61,9 @@ class TestArchitectureSampleTable:
         r = parse("Vikings.Valhalla.S02.COMPLETE.720p.NF.WEBRip.Hindi.zip")
         assert r.series_name == "Vikings Valhalla"
         assert r.season == 2
-        assert r.episode == 0
+        assert r.episode == 1
+        assert r.start_ep == 1
+        assert r.end_ep == 10
         assert r.quality == "720p"
         assert r.languages == ["Hindi"]
 
@@ -135,7 +139,9 @@ class TestEdgeCases:
         r = parse("SomeShow.S03.mkv")
         # Season matches but is_complete_season is False (no complete/zip/pack keyword)
         assert r.season == 3
-        assert r.episode == 0
+        assert r.episode == 1
+        assert r.start_ep == 1
+        assert r.end_ep == 1
         assert r.is_complete_season is False
 
     def test_language_display_empty(self):
