@@ -84,7 +84,7 @@ class TestMultiPartBatch:
         assert r.quality == "720p"
 
     def test_batch_no_part(self):
-        r = parse("Money Heist S01 E01-E06 720p.mkv")
+        r = parse("Money Heist S01 E01-E06 720p 10Bit WEBRip x265.mkv")
         assert r.series_name == "Money Heist"
         assert r.season == 1
         assert r.start_ep == 1

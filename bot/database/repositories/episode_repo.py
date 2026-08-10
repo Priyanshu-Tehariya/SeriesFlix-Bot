@@ -65,6 +65,24 @@ class EpisodeRepository(BaseRepository[Episode]):
             existing.raw_filename = raw_filename
             return existing, False
 
+        # Check for existing variant to prevent uq_episode_variant violations
+        result = await self.session.execute(
+            select(Episode).where(
+                Episode.season_id == season_id,
+                Episode.episode_number == episode_number,
+                Episode.quality == quality,
+                Episode.language == language,
+            )
+        )
+        existing_variant = result.scalar_one_or_none()
+        if existing_variant:
+            existing_variant.file_hash = file_hash
+            existing_variant.file_id = file_id
+            existing_variant.file_unique_id = file_unique_id
+            existing_variant.file_size = file_size
+            existing_variant.raw_filename = raw_filename
+            return existing_variant, False
+
         episode = Episode(
             file_hash=file_hash,
             season_id=season_id,
