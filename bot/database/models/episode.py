@@ -27,12 +27,7 @@ class Episode(Base, TimestampMixin):
     """
 
     __tablename__ = "episodes"
-    __table_args__ = (
-        UniqueConstraint(
-            "season_id", "episode_number", "quality", "language",
-            name="uq_episode_variant",
-        ),
-    )
+    __table_args__ = ()
 
     id: Mapped[int] = mapped_column(primary_key=True)
     season_id: Mapped[int] = mapped_column(
