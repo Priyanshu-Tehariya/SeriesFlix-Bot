@@ -74,6 +74,15 @@ class IndexingService:
 
         # Determine if this is a batch file
         is_batch = (parsed.start_ep is not None and parsed.end_ep is not None and parsed.start_ep != parsed.end_ep)
+        
+        if is_batch and (parsed.end_ep - parsed.start_ep > 50):
+            logger.warning(
+                "indexing_rejected_massive_range",
+                filename=filename,
+                start_ep=parsed.start_ep,
+                end_ep=parsed.end_ep,
+            )
+            return False, None
 
         if not is_batch:
             # Single episode logic (original)
