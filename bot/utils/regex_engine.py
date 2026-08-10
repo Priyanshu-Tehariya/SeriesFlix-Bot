@@ -78,7 +78,7 @@ class FilenameParser:
             result.season = int(m.group(1))
             result.start_ep = int(m.group(2))
             result.end_ep = int(m.group(3))
-            result.episode = result.start_ep
+            result.episode = 0
             match_pos = m.start()
         elif m := RE_STANDARD_SXXEXX.search(cleaned):
             result.season, result.episode = int(m.group(1)), int(m.group(2))

@@ -84,20 +84,11 @@ class IndexingService:
             )
             return False, None
 
-        if not is_batch:
-            # Single episode logic (original)
-            file_hash = self._compute_file_hash(file_unique_id)
-            existing = await self._episode_repo.get_by_file_hash(file_hash)
-            if existing is not None:
-                logger.info("indexing_skipped_duplicate", file_hash=file_hash, filename=filename)
-                return False, existing.id
-        else:
-            # For batches, we check the first episode in the batch to fast-fail idempotency
-            test_hash = self._compute_file_hash(f"{file_unique_id}_E{parsed.start_ep}")
-            existing = await self._episode_repo.get_by_file_hash(test_hash)
-            if existing is not None:
-                logger.info("indexing_skipped_duplicate_batch", file_hash=test_hash, filename=filename)
-                return False, existing.id
+        file_hash = self._compute_file_hash(file_unique_id)
+        existing = await self._episode_repo.get_by_file_hash(file_hash)
+        if existing is not None:
+            logger.info("indexing_skipped_duplicate", file_hash=file_hash, filename=filename)
+            return False, existing.id
 
         # --- Map quality string to QualityEnum ---
         quality_map: dict[str, QualityEnum] = {
@@ -127,32 +118,27 @@ class IndexingService:
         episodes_created = False
         first_episode_id = None
         
-        start = parsed.start_ep or parsed.episode or 0
-        end = parsed.end_ep or parsed.episode or start
+        ep_num = parsed.episode if parsed.episode is not None else 0
 
-        for ep_num in range(start, end + 1):
-            if is_batch:
-                derived_hash = self._compute_file_hash(f"{file_unique_id}_E{ep_num}")
-            else:
-                derived_hash = self._compute_file_hash(file_unique_id)
+        # Idempotency hash computation
+        derived_hash = self._compute_file_hash(file_unique_id)
 
-            episode, ep_created = await self._episode_repo.upsert_by_file_hash(
-                file_hash=derived_hash,
-                season_id=season.id,
-                episode_number=ep_num,
-                file_id=file_id,
-                file_unique_id=file_unique_id,
-                file_size=file_size,
-                quality=quality_enum,
-                language=language,
-                raw_filename=filename,
-            )
-            
-            if ep_created:
-                episodes_created = True
-            
-            if first_episode_id is None:
-                first_episode_id = episode.id
+        episode, ep_created = await self._episode_repo.upsert_by_file_hash(
+            file_hash=derived_hash,
+            season_id=season.id,
+            episode_number=ep_num,
+            file_id=file_id,
+            file_unique_id=file_unique_id,
+            file_size=file_size,
+            quality=quality_enum,
+            language=language,
+            raw_filename=filename,
+        )
+        
+        if ep_created:
+            episodes_created = True
+        
+        first_episode_id = episode.id
 
         # Commit transaction to ensure data is saved
         await self._session.commit()
