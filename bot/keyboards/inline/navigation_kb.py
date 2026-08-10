@@ -81,15 +81,17 @@ def build_episode_kb(
     combined_ep = next((ep for ep in episodes if ep["episode_number"] == 0), None)
     if combined_ep:
         builder.button(
-            text="📦 Combined Season File",
+            text="📦 Complete Season (Combined File)",
             callback_data=EpisodeCB(season_id=season_id, episode_id=combined_ep["id"]),
         )
         
     # 2. Batch Download Button
-    builder.button(
-        text="📦 Complete Season (Batch Download)",
-        callback_data=BatchDownloadCB(season_id=season_id, quality=quality),
-    )
+    has_individual_eps = any(ep["episode_number"] > 0 for ep in episodes)
+    if has_individual_eps:
+        builder.button(
+            text="⚡ Complete Season (Batch Download)",
+            callback_data=BatchDownloadCB(season_id=season_id, quality=quality),
+        )
     
     # 3. Episode Grid
     for ep in episodes:
@@ -105,7 +107,8 @@ def build_episode_kb(
     adjustments = []
     if combined_ep:
         adjustments.append(1)
-    adjustments.append(1)  # For Batch Download
+    if has_individual_eps:
+        adjustments.append(1)  # For Batch Download
     
     # We can pass the sizes to builder.adjust, but since the rest is 2-col, we can do builder.adjust(*adjustments, 2)
     builder.adjust(*adjustments, 2)

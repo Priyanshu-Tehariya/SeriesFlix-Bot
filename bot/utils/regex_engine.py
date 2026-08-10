@@ -21,7 +21,7 @@ RE_VERBOSE = re.compile(r"Season\s*(\d{1,2}).{0,15}?Episode\s*(\d{1,3})", re.IGN
 
 # 4. Season-only (paired with a completeness keyword) -> "S04.COMPLETE", "Season 2 Zip"
 RE_SEASON_ONLY = re.compile(r"[Ss](?:eason)?[\s._-]?(\d{1,2})(?![Ee\d])", re.IGNORECASE)
-RE_COMPLETE_FLAG = re.compile(r"\b(complete|full\s?season|zip|pack|combined|batch)\b", re.IGNORECASE)
+RE_COMPLETE_FLAG = re.compile(r"\b(VOL\s*\d+|VOLUME\s*\d+|PART\s*\d+|COMBINED|COMPLETE|FULL\s*SEASON|BATCH|ZIP|PACK)\b", re.IGNORECASE)
 
 # 5. Resolution / quality
 RE_QUALITY = re.compile(r"(2160p|4k|1440p|1080p|720p|480p|360p)", re.IGNORECASE)
@@ -96,9 +96,7 @@ class FilenameParser:
             result.season = int(m.group(1))
             result.is_complete_season = bool(RE_COMPLETE_FLAG.search(cleaned))
             if result.is_complete_season:
-                result.start_ep = 1
-                result.end_ep = 10
-                result.episode = 1
+                result.episode = 0
             else:
                 result.episode = 1
                 result.start_ep = result.end_ep = 1
