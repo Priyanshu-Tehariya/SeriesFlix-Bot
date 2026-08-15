@@ -60,10 +60,10 @@ def build_episode_caption(ep: dict, auto_delete_seconds: int = 0) -> str:
     import html
     ep_label = f"Episode {ep['episode_number']:02d}" if ep.get("episode_number", 1) > 0 else "Complete Season"
     caption = (
-        f"📺 {ep_label} [{ep.get('quality', '')}]\n"
-        f"🌐 Language: {clean_language_display(ep.get('language', ''))}\n"
-        f"💾 Size: {format_file_size(ep.get('file_size', 0))}\n"
-        f"📁 <b>Filename:</b> <code>{html.escape(ep.get('raw_filename', ''))}</code>"
+        f"📁 <b>Filename:</b> <b>{html.escape(ep.get('raw_filename', ''))}</b>\n"
+        f"📺 <b>{ep_label} [{ep.get('quality', '')}]</b>\n"
+        f"🌐 <b>Language:</b> {clean_language_display(ep.get('language', ''))}\n"
+        f"💾 <b>Size:</b> {format_file_size(ep.get('file_size', 0))}"
     )
     if auto_delete_seconds > 0:
         minutes = auto_delete_seconds // 60
